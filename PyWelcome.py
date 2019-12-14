@@ -2,7 +2,6 @@
 from __future__ import print_function
 import sys, os, argparse, time, signal
 import cv2
-import cv2.cv as cv
 #import subprocess
 
 try:
@@ -120,7 +119,7 @@ if __name__ == '__main__':
     
     # open file, stdout is unbuffered
     if args.output == 'stdout':
-        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+        #sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
         output_file = sys.stdout
     else:
         output_file = open(args.output, 'a')    
@@ -133,22 +132,22 @@ if __name__ == '__main__':
     cascade = cv2.CascadeClassifier(args.cascade)
     cam = cv2.VideoCapture(video_src)  
     if args.input_width > 0 and args.input_height > 0:
-        cam.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, float(args.input_width))
-        cam.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, float(args.input_height))
+        cam.set(cv2.CAP_PROP_FRAME_WIDTH, float(args.input_width))
+        cam.set(cv2.CAP_PROP_FRAME_HEIGHT, float(args.input_height))
     if cam is None or not cam.isOpened():
         print("Warning: unable to open video source:" + video_src, file=sys.stderr)
-    frame_width = int(cam.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
+    frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
     
     # initial position of VLB
     if args.vlb_position == 0:
-        vlb = int(cam.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT) / 2)
+        vlb = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT) / 2)
     else:
         vlb = args.vlb_position
         
     # create window and GUI
     cv2.namedWindow('Control Panel', 0)
     cv2.namedWindow('OpenCV People Counter', 0)
-    cv2.createTrackbar('VLB position', 'Control Panel', vlb, int(cam.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)), nothing)
+    cv2.createTrackbar('VLB position', 'Control Panel', vlb, int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT)), nothing)
     
     # get VFD over serial port ready
     if display_active:
@@ -171,7 +170,7 @@ if __name__ == '__main__':
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = cv2.equalizeHist(gray)
         t = cv2.getTickCount() / cv2.getTickFrequency()
-        rects = cascade.detectMultiScale(gray, scaleFactor=args.cascade_scale, minNeighbors=4, minSize=(30, 30), flags = cv.CV_HAAR_SCALE_IMAGE)
+        rects = cascade.detectMultiScale(gray, scaleFactor=args.cascade_scale, minNeighbors=4, minSize=(30, 30), flags = cv2.CASCADE_SCALE_IMAGE)
         if len(rects) == 0:
             rects = []
         else:
@@ -209,7 +208,7 @@ if __name__ == '__main__':
                             cnt = peoplecounter
                             counter_output(peoplecounter, c_s, c_x, c_y)
                         faces[idx] = (x1, y1, x2, y2, det, t, cnt)
-                        cv2.putText(vis, str(cnt), (c_x, c_y), cv2.FONT_HERSHEY_PLAIN, 1.0, green, lineType=cv2.CV_AA)
+                        cv2.putText(vis, str(cnt), (int(c_x), int(c_y)), 1, 1, green, lineType=3)
                         break
             else:
                 # Object not found in list means we add it to the list
@@ -220,8 +219,8 @@ if __name__ == '__main__':
             else:
                 color = red
             cv2.rectangle(vis, (x1, y1), (x2, y2), color, 2)
-        cv2.putText(vis, "Visitors counted: " + str(peoplecounter), (21, 51), cv2.FONT_HERSHEY_PLAIN, 3.0, (0,0,0), thickness=2, lineType=cv2.CV_AA)
-        cv2.putText(vis, "Visitors counted: " + str(peoplecounter), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3.0, green, thickness=2, lineType=cv2.CV_AA)
+        cv2.putText(vis, "Visitors counted: " + str(peoplecounter), (21, 51), 1, 3.0, (0,0,0), thickness=2, lineType=3)
+        cv2.putText(vis, "Visitors counted: " + str(peoplecounter), (20, 50), 1, 3.0, green, thickness=2, lineType=3)
         cv2.line(vis, (0, vlb + 1), (frame_width, vlb + 1), (0,0,0))        
         cv2.line(vis, (0, vlb), (frame_width, vlb), green)        
         cv2.imshow('OpenCV People Counter', vis)
